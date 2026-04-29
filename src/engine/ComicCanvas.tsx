@@ -32,7 +32,7 @@ export const ComicCanvas: React.FC = () => {
 
   const startDebate = () => {
     setGamePhase('debate');
-    setActiveTarget('The Adversary');
+    setActiveTarget('ВИКТОР НОВАК :: КУРАТОР');
   };
 
   const panelVariants = {
@@ -89,10 +89,7 @@ export const ComicCanvas: React.FC = () => {
         ) : (
           <div className="flex-grow flex flex-col h-full">
             <h2 className="text-xl font-serif text-accent-secondary uppercase tracking-widest border-b border-text-muted pb-2 shrink-0 flex gap-2">
-              <TypewriterText text="[ CONNECTION ESTABLISHED ]" delay={1100} speed={40} />
-              {activeTarget && (
-                <TypewriterText text={`:: ${activeTarget}`} delay={2100} speed={50} className="text-text-primary" />
-              )}
+              <TypewriterText text="[ СОЕДИНЕНИЕ УСТАНОВЛЕНО : ОБЪЕКТ НОВАК ]" delay={1100} speed={40} />
             </h2>
             
             <div className="flex-grow overflow-y-auto py-4 space-y-6">

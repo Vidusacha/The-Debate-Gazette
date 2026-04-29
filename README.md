@@ -5,7 +5,10 @@
 The Debate Gazette is a high-fidelity, narrative-driven experience built using a hybrid Vibe-Coding pipeline. It combines the atmospheric depth of Political Noir with cutting-edge 3D web technologies.
 
 ## 👁️ The Vision
-A browser-based investigation and social deduction game where the player navigates a desaturated world of political intrigue. The core experience centers around "The Gazette" – a medium through which the player manipulates public opinion and uncovers redacted truths.
+A browser-based investigation and social deduction game where the player navigates a desaturated world of political intrigue. The core experience centers around "The Gazette" and high-stakes encounters with high-ranking "Curators" of the system.
+
+## 🎭 Characters & Personas
+- **Viktor Novak (The Curator):** A cynical, Max Payne-inspired antagonist. All interactions are localized in Russian, utilizing heavy noir metaphors and a fatalistic tone.
 
 ## 🛠️ Tech Stack
 - **Framework:** React + TypeScript + Vite
