@@ -1,0 +1,14 @@
+{
+  "physics": {
+    "gravity": 9.81,
+    "friction": 0.1
+  },
+  "player": {
+    "moveSpeed": 5.0,
+    "rotationSpeed": 2.0
+  },
+  "visuals": {
+    "fogDensity": 0.05,
+    "bloomIntensity": 1.5
+  }
+}
