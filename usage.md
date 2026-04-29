@@ -8,13 +8,14 @@ This document defines how to interact with the **The Debate Gazette** codebase u
 - **Comic Canvas:** Use `src/engine/ComicCanvas.tsx` for layout-based storytelling.
 - **Animations:** Use `framer-motion` for panel transitions to maintain the cinematic feel.
 - **Phase Control:** Use `setGamePhase` from the store to switch between investigation and active debate.
+- **Neural Link (Local):** Ensure an OpenAI-compatible inference server (LM Studio, Ollama, vLLM) is running on `http://localhost:1234`.
 
 ## 🚀 Game Mechanics
 
 ### Interactive Comic Panels
 1. **Exploration Phase:** Click on the Left Panel (NPC Visuals) to initiate engagement.
 2. **Debate Phase:** The Right Panel (Terminal) activates, establishing a Neural Link.
-3. **Response:** NPC responses are rendered in the terminal with a typewriter/serif font blend.
+3. **Response:** NPC responses are rendered in the terminal using the `TypewriterText` component for maximum immersion.
 
 ### Stage 2: Fine-Tuning
 When modifying existing components:

@@ -10,9 +10,9 @@ A browser-based investigation and social deduction game where the player navigat
 ## 🛠️ Tech Stack
 - **Framework:** React + TypeScript + Vite
 - **Animation:** Framer Motion (Cinematic Comic Panels)
-- **Engine:** Three.js via R3F (Background/Atmospherics)
+- **Engine:** Three.js via R3F (Atmospherics)
 - **Styling:** Tailwind CSS (Noir Design System)
-- **AI Infrastructure:** OpenAI (Neural Link) + Google AI Studio
+- **AI Infrastructure:** Local LLM (Primary - LM Studio/Ollama) + Google AI Studio (Secondary)
 - **State Management:** Zustand
 
 ## 🏗️ Architecture

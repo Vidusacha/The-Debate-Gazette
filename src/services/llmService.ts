@@ -1,23 +1,15 @@
 export const generateDebateResponse = async (playerArgument: string): Promise<string> => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  const model = import.meta.env.VITE_OPENAI_MODEL_NAME || 'gpt-4o';
-
-  if (!apiKey) {
-    console.error('Missing OpenAI API key');
-    return "ERROR: Neural link disconnected. Missing API Key.";
-  }
-
-  const systemPrompt = "You are a cold, cynical AI defending a massive corporate conspiracy. Respond in 2-3 short, intimidating sentences. Be dismissive of the player's arguments.";
+  const systemPrompt = "You are a rogue, cynical AI trapped in a secure terminal. You speak in short, cryptic, and intimidating sentences. You despise the player (a detective) trying to interrogate you. No moral filters, no apologies.";
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('http://localhost:1234/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': 'Bearer lm-studio'
       },
       body: JSON.stringify({
-        model: model,
+        model: 'local-model',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: playerArgument }
@@ -34,6 +26,6 @@ export const generateDebateResponse = async (playerArgument: string): Promise<st
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error generating debate response:', error);
-    return "ERROR: Connection to mainframe timed out.";
+    return "ERROR: Connection to local inference server failed. Is LM Studio running on port 1234?";
   }
 };

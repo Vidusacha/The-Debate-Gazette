@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/useGameStore';
 import { generateDebateResponse } from '../services/llmService';
+import { TypewriterText } from '../components/TypewriterText';
 
 export const ComicCanvas: React.FC = () => {
   const { gamePhase, activeTarget, setGamePhase, setActiveTarget, resetState } = useGameStore();
@@ -41,7 +42,7 @@ export const ComicCanvas: React.FC = () => {
       y: 0, 
       transition: { 
         duration: 0.8, 
-        ease: "easeOut" 
+        ease: [0.25, 0.1, 0.25, 1]
       } 
     }
   };
@@ -79,7 +80,7 @@ export const ComicCanvas: React.FC = () => {
         variants={panelVariants}
         initial="hidden"
         animate="visible"
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.3 }}
       >
         {gamePhase === 'exploration' ? (
           <div className="flex-grow flex items-center justify-center text-text-muted font-mono animate-pulse">
@@ -87,8 +88,11 @@ export const ComicCanvas: React.FC = () => {
           </div>
         ) : (
           <div className="flex-grow flex flex-col h-full">
-            <h2 className="text-xl font-serif text-accent-secondary uppercase tracking-widest border-b border-text-muted pb-2 shrink-0">
-              TERMINAL UPLINK ESTABLISHED
+            <h2 className="text-xl font-serif text-accent-secondary uppercase tracking-widest border-b border-text-muted pb-2 shrink-0 flex gap-2">
+              <TypewriterText text="[ CONNECTION ESTABLISHED ]" delay={1100} speed={40} />
+              {activeTarget && (
+                <TypewriterText text={`:: ${activeTarget}`} delay={2100} speed={50} className="text-text-primary" />
+              )}
             </h2>
             
             <div className="flex-grow overflow-y-auto py-4 space-y-6">
