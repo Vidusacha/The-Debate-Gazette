@@ -9,17 +9,21 @@ export const ComicCanvas: React.FC = () => {
   const [playerInput, setPlayerInput] = useState('');
   const [opponentResponse, setOpponentResponse] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [userHandle, setUserHandle] = useState('');
 
   const handleSubmit = async () => {
     if (!playerInput.trim() || isTyping) return;
     
     setIsTyping(true);
     setOpponentResponse(null);
+    setStatusMessage('SCANNING UPLINK...');
     
-    const response = await generateDebateResponse(playerInput);
+    const response = await generateDebateResponse(playerInput, setStatusMessage, userHandle || undefined);
     
     setOpponentResponse(response);
     setIsTyping(false);
+    setStatusMessage(null);
     setPlayerInput('');
   };
 
@@ -106,13 +110,21 @@ export const ComicCanvas: React.FC = () => {
               
               {isTyping && (
                 <div className="text-accent-primary animate-pulse tracking-widest uppercase font-mono text-sm border-l-2 border-accent-primary pl-4">
-                  AWAITING NEURAL RESPONSE...
+                  {statusMessage || 'AWAITING NEURAL RESPONSE...'}
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="shrink-0 mt-4 border-t border-text-muted pt-4">
+            <div className="shrink-0 mt-4 border-t border-text-muted pt-4 space-y-4">
+              <input 
+                type="text"
+                value={userHandle}
+                onChange={(e) => setUserHandle(e.target.value)}
+                disabled={isTyping}
+                placeholder="OPERATIVE_HANDLE (Optional)"
+                className="w-full bg-base/50 border border-text-muted text-text-primary p-2 focus:outline-none focus:border-accent-secondary font-mono text-sm"
+              />
               <textarea 
                 value={playerInput}
                 onChange={(e) => setPlayerInput(e.target.value)}

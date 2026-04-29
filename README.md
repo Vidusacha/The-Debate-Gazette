@@ -15,14 +15,13 @@ A browser-based investigation and social deduction game where the player navigat
 - **Animation:** Framer Motion (Cinematic Comic Panels)
 - **Engine:** Three.js via R3F (Atmospherics)
 - **Styling:** Tailwind CSS (Noir Design System)
-- **AI Infrastructure:** Local LLM (Primary - LM Studio/Ollama) + Google AI Studio (Secondary)
+- **AI Infrastructure:** Local LLM + Google AI Studio + Tavily API (Real-World Intel)
 - **State Management:** Zustand
 
 ## 🏗️ Architecture
-- `src/engine/ComicCanvas.tsx`: Cinematic layout engine using dynamic panels.
-- `src/components/GameLayout.tsx`: Main frame with header/footer CRT-style telemetry.
-- `src/store/useGameStore.ts`: Phase-based state machine (Exploration ↔ Debate).
-- `src/services/llmService.ts`: Real-time adversarial AI logic.
+- `src/engine/ComicCanvas.tsx`: Cinematic layout engine with multi-stage Handshake logic.
+- `src/services/searchService.ts`: Real-time intel gathering via Tavily.
+- `src/services/llmService.ts`: Context-aware adversarial logic.
 
 ---
 *Created and maintained by the Antigravity IDE Architect pipeline.*

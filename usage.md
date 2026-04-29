@@ -5,15 +5,16 @@ This document defines how to interact with the **The Debate Gazette** codebase u
 ## 🚀 Working with the Pipeline
 
 ### Stage 1: Initialization (Current)
-- **Comic Canvas:** Use `src/engine/ComicCanvas.tsx` for layout-based storytelling.
-- **Narrative Persona:** The adversarial AI (Viktor Novak) uses a Russian-only system prompt in `src/services/llmService.ts`.
-- **Animations:** Use `framer-motion` for panel transitions.
+- **Comic Canvas:** Cinematic interaction model with multi-panel animations.
+- **Real-World Intel:** Configure `VITE_TAVILY_API_KEY` in `.env` to enable context-aware NPC responses.
+- **Neural Link:** Uses local inference combined with real-time search data.
 
 ## 🚀 Game Mechanics
 
 ### Interactive Comic Panels
-1. **Exploration Phase:** Click on the Left Panel (NPC Visuals) to initiate engagement with the target (e.g., Viktor Novak).
-2. **Debate Phase:** The Right Panel (Terminal) activates, initiating a localized Russian Noir dialogue.
+1. **Engagement:** Click Left Panel to target an entity.
+2. **Handshake:** The system performs a `SCANNING UPLINK...` phase to gather real-world data based on the `OPERATIVE_HANDLE`.
+3. **Hyper-Contextual Debate:** Viktor Novak uses gathered intel (weather, news, social traces) to intimidate the player in Russian Noir style.
 3. **Response:** NPC responses are rendered in the terminal using the `TypewriterText` component for maximum immersion.
 
 ### Stage 2: Fine-Tuning
