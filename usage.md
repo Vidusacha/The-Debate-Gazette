@@ -1,4 +1,4 @@
-# Usage Guide: Upgraded Debate Engine & Git Auto-Pilot
+# Usage Guide: Upgraded Debate Engine & Git Auto-Pilot (v1.3.0)
 
 This document defines how to interact with the upgraded **The Debate Gazette** codebase using AI agents, and outlines the advanced trialogue mechanics and automated git tools.
 
@@ -44,16 +44,20 @@ You can customize the debate dynamics on the fly using the **Settings Drawer**:
 
 ## 📝 Rules for GIT Operators & The Auto-Pilot Script
 
-### The `git auto` Pipeline
-To make git operations effortless and ensure that the codebase remains fully documented and clean, we have introduced a **Gemini-Powered Git Auto-Pilot** script.
+### The `git auto` Pipeline (v1.3.0)
+To make git operations effortless and ensure that the codebase remains fully documented and clean, we have introduced a **Gemini-Powered Git Auto-Pilot** script. This enhanced version (`v1.3.0`) brings significant improvements in documentation automation and script robustness.
 
 When you invoke the Git Auto-Pilot (by typing `git auto` in your terminal):
 1. **Delta Analysis:** The script automatically runs a `git diff` on all modifications in the directory.
-2. **Gemini Review:** The diff is sent to Google Gemini, which:
-   - Evaluates the structural and design changes.
-   - Summarizes the changes in a clear, professional, semantic commit message detailing *why* the changes were made, not just *what*.
-   - Verifies whether support documentation (`README.md`, `usage.md`) matches the code update. If a mismatch is found, it automatically writes updates for those files!
-3. **Stage & Commit:** All changes (including updated documentation) are automatically staged and committed.
+2. **Gemini Review & Dynamic Documentation:** The comprehensive `git diff`, along with the full contents of all discoverable markdown support files in the repository, is sent to Google Gemini. Gemini, now acting as a Senior Principal Software Engineer and Technical Writer, performs a multi-faceted analysis:
+   - It evaluates the structural, design, and functional changes introduced by the code delta.
+   - It generates a highly professional, semantic, and context-rich commit message that explains the "why" and design choices behind the modifications.
+   - Crucially, it dynamically assesses whether any existing markdown support files (e.g., `README.md`, `usage.md`, `DESIGN.md`, or other `.md` files) are outdated, incomplete, or lack documentation regarding new features, architectural changes, setup parameters, or usage instructions based on the provided diff.
+   - If updates are required for a file, Gemini generates its FULL, complete, and harmonized content. These updated files are then automatically written back to their original paths on disk.
+   - The entire response from Gemini is a structured JSON object, ensuring a standardized and parseable output that encapsulates both the proposed commit message and any necessary documentation updates.
+   - **Improved Environment Loading:** The script now robustly loads `.env` variables by first checking the current working directory, and then falling back to the script's installation directory, enhancing flexibility and portability.
+   - **Cross-Platform Path Resolution:** The script intelligently resolves absolute paths for its internal Node.js component, specifically handling Windows Subsystem for Linux (WSL) environments to ensure seamless operation across different OS configurations.
+3. **Stage & Commit:** All detected changes, including any dynamically updated documentation files, are automatically staged and committed.
 4. **Push:** The script pushes the commit to the active remote branch.
 
 ### How to Invoke

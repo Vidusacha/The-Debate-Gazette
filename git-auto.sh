@@ -11,7 +11,7 @@ RESET='\033[0m'
 BOLD='\033[1m'
 
 echo -e "${CYAN}==================================================${RESET}"
-echo -e "${GOLD}   THE DEBATE GAZETTE // GIT AUTO-PILOT v1.2.0    ${RESET}"
+echo -e "${GOLD}   THE DEBATE GAZETTE // GIT AUTO-PILOT v1.3.0    ${RESET}"
 echo -e "${CYAN}==================================================${RESET}"
 echo -e "🚀 ${BOLD}Scanning differences and invoking Gemini...${RESET}"
 
@@ -26,8 +26,18 @@ else
   exit 1
 fi
 
-# 2. Run Node analyzer
-COMMIT_MSG=$($NODE_CMD scripts/git-auto-pilot.js)
+# Dynamically resolve absolute directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+SCRIPT_PATH="$DIR/scripts/git-auto-pilot.js"
+if [[ "$(which $NODE_CMD)" == *".exe"* ]]; then
+  if command -v wslpath >/dev/null 2>&1; then
+    SCRIPT_PATH=$(wslpath -w "$SCRIPT_PATH")
+  fi
+fi
+
+# 2. Run Node analyzer with absolute path
+COMMIT_MSG=$($NODE_CMD "$SCRIPT_PATH")
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
@@ -45,7 +55,7 @@ fi
 # 4. Extract first line as summary
 SUMMARY=$(echo "$COMMIT_MSG" | head -n 1)
 
-echo -e "\n${GREEN}✅ Delta Analysis Complete!${RESET}"
+echo -e "\n${GREEN}✅ Delta Analysis & Documentation Complete!${RESET}"
 echo -e "📊 ${BOLD}AI Commit Summary:${RESET} ${CYAN}${SUMMARY}${RESET}"
 echo -e "💬 ${BOLD}Proposed Commit Message:${RESET}"
 echo -e "${CYAN}--------------------------------------------------${RESET}"
