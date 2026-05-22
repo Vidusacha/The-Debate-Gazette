@@ -58,7 +58,7 @@ When you invoke the Git Auto-Pilot (by typing `git auto` in your terminal):
    - **Improved Environment Loading:** The script now robustly loads `.env` variables by first checking the current working directory, and then falling back to the script's installation directory, enhancing flexibility and portability.
    - **Cross-Platform Path Resolution:** The script intelligently resolves absolute paths for its internal Node.js component, specifically handling Windows Subsystem for Linux (WSL) environments to ensure seamless operation across different OS configurations.
 3. **Stage & Commit:** All detected changes, including any dynamically updated documentation files, are automatically staged and committed.
-4. **Push:** The script pushes the commit to the active remote branch.
+4. **Push Changes & Set Upstream:** The script now dynamically determines the current branch and uses `git push --set-upstream origin "$CURRENT_BRANCH"` to push the commit. This automatically sets the upstream tracking for new branches, streamlining the first push and ensuring all branches are properly linked to their remote counterparts.
 
 ### How to Invoke
 * Just type `git auto` (or run `./git-auto.sh`) from the project root!

@@ -81,7 +81,8 @@ fi
 
 # 6. Push changes
 echo -e "⚡ ${BOLD}Pushing changes to remote repository...${RESET}"
-git push
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+git push --set-upstream origin "$CURRENT_BRANCH"
 PUSH_EXIT=$?
 
 if [ $PUSH_EXIT -eq 0 ]; then
