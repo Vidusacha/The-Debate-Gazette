@@ -19,11 +19,11 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
     // Reset when props change
     setDisplayedText('');
 
-    let typingInterval: NodeJS.Timeout;
+    let typingInterval: number;
 
     const startTimeout = setTimeout(() => {
       let i = 0;
-      typingInterval = setInterval(() => {
+      typingInterval = window.setInterval(() => {
         if (i < text.length) {
           setDisplayedText(text.substring(0, i + 1));
           i++;
@@ -35,7 +35,7 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
 
     return () => {
       clearTimeout(startTimeout);
-      clearInterval(typingInterval);
+      if (typingInterval) clearInterval(typingInterval);
     };
   }, [text, speed, delay]);
 

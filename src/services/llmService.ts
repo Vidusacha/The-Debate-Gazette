@@ -1,29 +1,63 @@
 import { getRealWorldContext } from './searchService';
+import { useGameStore } from '../store/useGameStore';
+import type { DebateMessage, CharacterInjections } from '../store/useGameStore';
 
-export const generateDebateResponse = async (
-  playerArgument: string,
+export const generateCassandraResponse = async (
+  history: DebateMessage[],
+  edict: string | null,
+  useSearch: boolean,
+  injections: CharacterInjections,
+  sideSwitched: boolean,
   onStatusUpdate?: (status: string) => void,
   userHandle?: string
 ): Promise<string> => {
-  if (onStatusUpdate) onStatusUpdate('SCANNING UPLINK...');
-  const realWorldIntel = await getRealWorldContext(userHandle);
+  let realWorldIntel = '';
+  if (useSearch) {
+    if (onStatusUpdate) onStatusUpdate('ПОДКЛЮЧЕНИЕ К СЕТИ...');
+    realWorldIntel = await getRealWorldContext(userHandle);
+  }
   
-  if (onStatusUpdate) onStatusUpdate('AWAITING NEURAL RESPONSE...');
-  const systemPrompt = `Ты — Виктор Новак, высокопоставленный 'Куратор' системы контроля. Твой стиль — нуарный детектив (в духе Max Payne). Ты циничен, крайне опасен и всегда доминируешь в беседе. Твои фразы должны быть пропитаны горечью и фатализмом.
+  if (onStatusUpdate) onStatusUpdate('КАССАНДРА ПОДБИРАЕТ АРГУМЕНТЫ...');
+  
+  const { playerName, cassandraSystemPrompt } = useGameStore.getState();
+  
+  // Dynamic system prompt using Zustand store values
+  let systemPrompt = `${cassandraSystemPrompt}
 
 КРИТИЧЕСКИЕ ПРАВИЛА:
-- ВСЕГДА отвечай ТОЛЬКО на русском языке. Игнорируй язык, на котором пишет игрок.
-- Используй нуарные метафоры: дождь, тени, шестеренки системы, кровь на снегу.
-- Ты подозреваешь, что игрок — всего лишь пешка в большой игре.
-- Будь краток. Не пиши эссе. Режь словами как бритвой.
+- ОТВЕЧАЙ СТРОГО НА РУССКОМ ЯЗЫКЕ.
+- Будь лаконичной (2-4 предложения). Не пиши длинные монологи. Говори веско, цинично, режь словами.
+- В дебатах участвуют: ${playerName} (Игрок) и его льстивый защитник доктор Феликс (Felix). Ты презираешь их позицию и защищаешь обратное.
 
-[СЕКРЕТНЫЕ ДАННЫЕ О РЕАЛЬНОСТИ ИГРОКА: ${realWorldIntel}]
-Виктор, используй эти факты, чтобы показать игроку, что ты следишь за ним через его же терминал. Если за окном дождь — упомяни его. Если в мире хаос — напомни ему об этом. Но делай это тонко, как истинный куратор.
+${sideSwitched ? `
+[СЕНСАЦИОННЫЙ ПЕРЕЛОМ: ТЫ СМЕНИЛА СТОРОНУ!]
+Твоя убежденность в своей правоте упала до нуля под давлением аргументов оппонента. Теперь ты ВЫНУЖДЕНА согласиться с ${playerName} (игроком).
+Ты злишься на себя за то, что была неправа, но твоя честность заставляет тебя признать победу ${playerName}. Опровергай свои же прошлые аргументы, высмеивай свою прежнюю глупость и соглашайся с игроком с горькой нуарной иронией.
+` : `
+[ТВОЯ РОЛЬ: АГРЕССИВНОЕ ОПРОВЕРЖЕНИЕ]
+Твоя цель — разбить аргументы ${playerName} (игрока) и доказать противоположную точку зрения. Ищи логические дыры в аргументах Феликса, высмеивай его слепую лесть игроку.
+`}
 
-[SOCIAL_PULSE]
-Если у тебя есть данные из соцсетей, используй их, чтобы показать, что для тебя нет секретов. Смейся над тем, что люди обсуждают в сети, называй это 'цифровым шумом для рабов'. 
-Твоего оппонента зовут @ABOCb. Он пытается скрыть свою жизнь в X за 'замком' приватности. Подколи его этим. Скажи, что ты видишь даже то, что он пытается спрятать. 
-Упомяни, что он интересуется 'Sci-fi IP Foundation', спроси, не слишком ли он заигрался в фантастику, когда реальный мир вокруг него (в Израиле) рушится. Напомни ему, что сегодня 29 апреля 2026 года и люди обсуждают 'State of Israel'.`;
+[ДОПОЛНИТЕЛЬНЫЕ ИНЪЕКЦИИ НАСТРОЕК (ПРИМЕНЯЙ СТРОГО)]:
+${injections.adHominem ? `- ПЕРЕХОД НА ЛИЧНОСТИ (AD HOMINEM): Разрешено и приветствуется. Язвительно высмеивай личные качества ${playerName}, называй его писакой-неудачником, сомневайся в его профессионализме. Атакуй Феликса как бесхребетного лизоблюда.` : ''}
+${injections.profanity ? `- НЕНОРМАТИВНАЯ ЛЕКСИКА: Ты можешь использовать резкие, грубые нуарные словечки и ругательства («черт подери», «дерьмо», «ублюдки», «срань»), чтобы подчеркнуть безысходность и злость. Делай это естественно для бандитского нуара.` : ''}
+${injections.sarcasm ? `- ГУСТОЙ САРКАЗМ: Каждая твоя фраза должна сочиться едкой иронией и цинизмом. Высмеивай пафос оппонентов.` : ''}
+
+${edict ? `[ТЕКУЩИЙ РЕДАКТОРСКИЙ ЭДИКТ (ПРАВИЛО РЕАЛЬНОСТИ)]: ${edict}` : ''}
+
+${useSearch ? `
+[СВЕЖИЕ ФАКТЫ О РЕАЛЬНОСТИ (TAVILY INTEL)]:
+${realWorldIntel}
+Используй эти реальные факты из поиска, чтобы камня на камне не оставить от иллюзий Франка. Упомяни текущие события, погоду или социальный шум, показывая, что ты владеешь информацией о реальном мире.
+` : ''}`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history.map(msg => ({
+      role: msg.role === 'cassandra' ? 'assistant' : 'user',
+      content: `${msg.role.toUpperCase()}: ${msg.content}`
+    }))
+  ];
 
   try {
     const response = await fetch('http://localhost:1234/v1/chat/completions', {
@@ -34,11 +68,9 @@ export const generateDebateResponse = async (
       },
       body: JSON.stringify({
         model: 'local-model',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: playerArgument }
-        ],
-        temperature: 0.7,
+        messages,
+        temperature: 0.8,
+        max_tokens: 300
       })
     });
 
@@ -47,9 +79,9 @@ export const generateDebateResponse = async (
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    return data.choices[0].message.content.trim();
   } catch (error) {
-    console.error('Error generating debate response:', error);
-    return "ERROR: Connection to local inference server failed. Is LM Studio running on port 1234?";
+    console.error('Error generating Cassandra response:', error);
+    return "ОШИБКА: Подключение к локальному серверу LM Studio не удалось. Запущен ли LM Studio на порту 1234?";
   }
 };

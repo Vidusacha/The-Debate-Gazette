@@ -1,7 +1,13 @@
 import React from 'react';
 import { ComicCanvas } from '../engine/ComicCanvas';
+import { SettingsDrawer } from './SettingsDrawer';
+import { FallaciesDrawer } from './FallaciesDrawer';
+import { ScoreboardDrawer } from './ScoreboardDrawer';
+import { useGameStore } from '../store/useGameStore';
 
 export const GameLayout: React.FC = () => {
+  const { gamePhase } = useGameStore();
+
   return (
     <div className="h-screen bg-base p-4 flex flex-col font-mono text-text-primary overflow-hidden">
       {/* Header framing */}
@@ -32,6 +38,16 @@ export const GameLayout: React.FC = () => {
         <span>SYS.ONLINE</span>
         <span>AWAITING INPUT...</span>
       </footer>
+      
+      {/* Absolute positioning overlays */}
+      <SettingsDrawer />
+      {gamePhase === 'debate' && (
+        <>
+          <FallaciesDrawer />
+          <ScoreboardDrawer />
+        </>
+      )}
     </div>
   );
 };
+
