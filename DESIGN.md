@@ -14,7 +14,7 @@ Chaos (-Y): Gaslighting, 4th-wall breaking, non-sequiturs.
 Metadata Metrics
 Veracity (Fact/Fake): Detection of hallucinations vs. WAG data.
 Integrity (Moral/Unmoral): Ethical alignment vs. Nihilistic aggression.
-Execution (Aesthetic/Ugly): Stylistic quality of the Noir prose.
+Execution (Aesthetic/Ugly): Stylistic quality of the Noir prose and UI presentation. The new dynamic character summary cards with bespoke SVG avatars and integrated settings navigation contribute to the "Aesthetic" aspect, enhancing user engagement and clarity.
 
 2. Reality Edicts (The Game Master)
 Every 3 turns, the Arbiter issues a "World State Change" that modifies the System Prompts of all agents.
@@ -39,6 +39,7 @@ To enhance immersion and user interaction, the game now integrates browser-nativ
 -   **Text-to-Speech (TTS):** Character dialogue from Felix, Cassandra, and Judge is rendered into audible speech using the Web Speech API's `SpeechSynthesis`.
     -   **Configurable Personas:** Each AI character has distinct default voice settings (pitch, rate) to match their persona, fully customizable by the player in the settings.
     -   **Emotional Resonance:** TTS adds a sensory dimension to character arguments, allowing for more nuanced emotional delivery.
+    -   **Granular Speech Control:** The `speechService` now supports message-ID specific control, allowing for pausing or skipping individual character utterances. Speech is also automatically interrupted upon player turn submission to prevent overlap and improve flow.
 -   **Speech-to-Text (STT):** Player input can be received via voice using the Web Speech API's `SpeechRecognition`.
     -   **Hands-Free Interaction:** This enables a more natural, conversational interface, reducing reliance on keyboard input during intense debates.
     -   **Accessibility:** Improves accessibility for players who prefer or require voice input.

@@ -4,7 +4,6 @@ import { Settings, X, Lock, Terminal, Edit3 } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 
 export const SettingsDrawer: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const { 
     settings, 
@@ -15,8 +14,29 @@ export const SettingsDrawer: React.FC = () => {
     felixSystemPrompt,
     setFelixSystemPrompt,
     cassandraSystemPrompt,
-    setCassandraSystemPrompt
+    setCassandraSystemPrompt,
+    isSettingsOpen,
+    settingsActiveSection,
+    setSettingsOpen,
+    setSettingsActiveSection
   } = useGameStore();
+
+  React.useEffect(() => {
+    if (isSettingsOpen && settingsActiveSection) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`settings-section-${settingsActiveSection}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('animate-glow-flash');
+          const removeTimer = setTimeout(() => {
+            element.classList.remove('animate-glow-flash');
+          }, 2000);
+          return () => clearTimeout(removeTimer);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isSettingsOpen, settingsActiveSection]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -104,22 +124,22 @@ export const SettingsDrawer: React.FC = () => {
     <>
       {/* Settings Toggle Button */}
       <button 
-        onClick={() => setIsOpen(true)}
-        className="absolute top-4 right-4 z-40 p-3 bg-panel/90 border-2 border-accent-secondary/50 text-accent-secondary hover:text-white hover:border-accent-secondary transition-all backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.5)] hover:rotate-90 duration-500 rounded-lg cursor-pointer"
+        onClick={() => setSettingsOpen(true)}
+        className="absolute top-4 right-4 z-40 p-3.5 bg-panel/90 border-2 border-accent-secondary/50 text-accent-secondary hover:text-white hover:border-accent-secondary transition-all backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.5)] hover:rotate-90 duration-500 rounded-lg cursor-pointer"
         title="Системные Настройки"
       >
-        <Settings size={22} className="animate-pulse" />
+        <Settings size={28} className="animate-pulse" />
       </button>
 
       {/* Drawer Overlay */}
       <AnimatePresence>
-        {isOpen && (
+        {isSettingsOpen && (
           <>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setSettingsOpen(false); setSettingsActiveSection(null); }}
               className="absolute inset-0 bg-[#0c0a09]/80 backdrop-blur-md z-50 transition-all duration-300"
             />
             
@@ -143,7 +163,7 @@ export const SettingsDrawer: React.FC = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => { setSettingsOpen(false); setSettingsActiveSection(null); }}
                   className="p-1.5 border border-text-muted/20 rounded-md text-text-muted hover:text-accent-primary hover:border-accent-primary transition-all duration-300 cursor-pointer"
                 >
                   <X size={20} />
@@ -162,7 +182,7 @@ export const SettingsDrawer: React.FC = () => {
               <div className="flex-grow overflow-y-auto pr-2 space-y-6 select-none scrollbar-thin scrollbar-thumb-accent-secondary/40 scrollbar-track-base/20">
                 
                 {/* 0. PLAYER PROFILE (Frank Schreiber Customization) */}
-                <section className="bg-base/40 p-4 border-2 border-text-muted/20 rounded-lg hover:border-accent-secondary/40 transition-colors duration-300">
+                <section id="settings-section-frank" className="bg-base/40 p-4 border-2 border-text-muted/20 rounded-lg hover:border-accent-secondary/40 transition-colors duration-300">
                   <h3 className="font-mono text-sm font-bold text-accent-secondary uppercase tracking-widest mb-3 border-b border-text-muted/10 pb-1.5 flex items-center gap-2">
                     <Edit3 size={16} /> Профиль Репортера
                   </h3>
@@ -260,7 +280,7 @@ export const SettingsDrawer: React.FC = () => {
                           const config = voiceSettings[role];
 
                           return (
-                            <div key={role} className={`p-3 bg-[#110f0e] border-l-2 ${accentColor} rounded-r space-y-3`}>
+                            <div key={role} id={`settings-section-${role}`} className={`p-3 bg-[#110f0e] border-l-2 ${accentColor} rounded-r space-y-3 transition-all duration-300`}>
                               <div>
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs font-bold uppercase tracking-wider">{charName}</span>

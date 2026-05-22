@@ -33,20 +33,23 @@ This document defines how to interact with the upgraded **The Debate Gazette** c
 - **Felix Switched:** When Felix's conviction drops to `0%`, he betrays Frank! He switches sides to agree with Cassandra, labels Frank an intellectual fraud, and praises Cassandra as a goddess of pure logic.
 
 ### 3. Voice Integration: Immersive Dialogue & Hands-Free Input
-- **Character Voicing (TTS):** All AI characters (Felix, Cassandra, Judge) now deliver their lines using Text-to-Speech (TTS) via the browser's native Web Speech API. This adds a crucial layer of immersion and distinct personality to each agent.
-- **Player Voice Input (STT):** Players can now use Speech-to-Text (STT) to dictate their arguments and news items, enabling a hands-free, more natural interaction experience. The transcribed text appears directly in the input field.
+- **Character Voicing (TTS):** All AI characters (Felix, Cassandra, Judge) now deliver their lines using Text-to-Speech (TTS) via the browser's native Web Speech API. This adds a crucial layer of immersion and distinct personality to each agent. The system now supports granular control over speech, allowing individual messages to be skipped or interrupted. Importantly, any ongoing speech is automatically halted when the player submits their turn, ensuring a smooth and responsive debate flow.
+-   **Player Voice Input (STT):** Players can now use Speech-to-Text (STT) to dictate their arguments and news items, enabling a hands-free, more natural interaction experience. The transcribed text appears directly in the input field.
 
 ### 4. Settings & Injections Panel
-You can customize the debate dynamics on the fly using the **Settings Drawer**:
-*   **Voice & Voicing (`Голос и Озвучка`):**
-    -   **Character Voicing (TTS):** Toggle Text-to-Speech for AI characters. When enabled, you can customize individual voices.
-    -   **Player Voice Input (STT):** Toggle Speech-to-Text for player input.
-    -   **Character Voice Customization:** For each character (Felix, Cassandra, Judge), select from available system voices, and adjust their unique pitch and speech rate to fine-tune their persona.
-*   **Gemini Deep Research:** Checkboxes enabling Felix and/or Cassandra to automatically spend Tavily search charges to pull live context for every statement.
-*   **Prompt Injections:** Enable or disable targeted linguistic behaviors:
-    -   *Ad Hominem Attacks:* Unlocks hostile, direct personal insults.
-    -   *Sarcasm:* Directs models to coat their arguments in biting, cynical irony.
-    -   *Profanity & Slang:* Permits gritty noir language and expletives to flow naturally in character monologues.
+*   **Settings Drawer: Dynamic Navigation & Visual Feedback:** You can customize the debate dynamics on the fly using the **Settings Drawer**. This panel now offers enhanced navigation directly from the main game canvas. Each character's summary card (Frank, Felix, Cassandra, and Judge Solomon Balance) includes a dedicated settings button (`⚙️`) that, when clicked, opens the settings drawer and automatically scrolls to and highlights the relevant section for that character, complete with a subtle glow-flash effect.
+    *   **Voice & Voicing (`Голос и Озвучка`):**
+        -   **Character Voicing (TTS):** Toggle Text-to-Speech for AI characters. When enabled, you can customize individual voices from available system voices, and adjust their unique pitch and speech rate to fine-tune their persona.
+        -   **Player Voice Input (STT):** Toggle Speech-to-Text for player input.
+        -   **Character Voice Customization:** For each character (Felix, Cassandra, Judge), select from available system voices, and adjust their unique pitch and speech rate to fine-tune their persona.
+    *   **AI Character Quotas & Research:**
+        -   **Deep Research:** Checkboxes enabling Felix and/or Cassandra to automatically spend Tavily search charges to pull live context for every statement.
+        -   **Search Charges:** View and adjust the maximum search charges (`quota`) for Felix and Cassandra.
+    *   **Prompt Injections:** Enable or disable targeted linguistic behaviors to alter character personas:
+        -   *Ad Hominem Attacks:* Unlocks hostile, direct personal insults.
+        -   *Sarcasm:* Directs models to coat their arguments in biting, cynical irony.
+        -   *Profanity & Slang:* Permits gritty noir language and expletives to flow naturally in character monologues.
+    *   **Judge Solomon Balance (The Arbiter):** Access specific settings for the Judge, including options to fine-tune their system prompt or evaluation parameters, influencing their verdicts and reality edicts.
 
 ---
 

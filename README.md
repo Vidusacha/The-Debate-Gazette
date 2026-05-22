@@ -41,6 +41,7 @@ The chief editor of the Gazette, attempting to write a groundbreaking story. You
 *   **Analytical UI Drawers:**
     1.  **Scoreboard Feed:** Tracks 5-axis metrics (Logic vs Emotion, Order vs Chaos, Truth vs Spin, Respect vs Hostility, Academic vs Cynicism), round tracking, and conviction levels.
     2.  **Fallacies Bureau (16-Point Audit):** A comprehensive directory mapping 16 formal and informal logical fallacies (e.g., *Ad Hominem*, *Straw Man*, *Moving Goalposts*) detected in speakers' claims.
+    3.  **Settings Dashboard:** A comprehensive, dynamically navigable panel for fine-tuning game mechanics. Now features direct access to character-specific settings via dedicated buttons on the main canvas, along with visual feedback (glow-flash) for active sections.
 
 ---
 

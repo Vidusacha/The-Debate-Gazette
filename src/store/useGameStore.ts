@@ -46,6 +46,10 @@ interface GameState {
   playerName: string;
   felixSystemPrompt: string;
   cassandraSystemPrompt: string;
+  currentlySpeakingId: string | null;
+  queuedSpeechIds: string[];
+  isSettingsOpen: boolean;
+  settingsActiveSection: 'frank' | 'felix' | 'cassandra' | 'judge' | null;
   settings: {
     frankQuota: number;
     felixQuota: number;
@@ -82,6 +86,10 @@ interface GameState {
   setPlayerName: (name: string) => void;
   setFelixSystemPrompt: (prompt: string) => void;
   setCassandraSystemPrompt: (prompt: string) => void;
+  setCurrentlySpeakingId: (id: string | null) => void;
+  setQueuedSpeechIds: (ids: string[]) => void;
+  setSettingsOpen: (open: boolean) => void;
+  setSettingsActiveSection: (section: 'frank' | 'felix' | 'cassandra' | 'judge' | null) => void;
   resetState: () => void;
 }
 
@@ -89,6 +97,48 @@ const initialInjections: CharacterInjections = {
   adHominem: false,
   profanity: false,
   sarcasm: true,
+};
+
+const LOCAL_STORAGE_KEY = 'debate-gazette-settings';
+
+const loadPersistedState = () => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        playerName: parsed.playerName ?? 'Frank Schreiber',
+        felixSystemPrompt: parsed.felixSystemPrompt ?? 'Ты — доктор Феликс Сикофант (Dr. Felix Sycophant), облачный ИИ-адвокат. Твой базовый стиль — изысканный, вежливый, высокоинтеллектуальный, но абсолютно бесхребетный и подхалимский. Ты говоришь на русском языке. Твои формулировки витиеваты, полны лести и псевдонаучного авторитета.',
+        cassandraSystemPrompt: parsed.cassandraSystemPrompt ?? 'Ты — Кассандра Циник (Cassandra Cynic). Оппонент в дебатах. Твой стиль — жесткий, темный нуарный детектив (в духе комиксов Max Payne). Ты измучена, скептична и видишь мир в оттенках серого.',
+        settings: parsed.settings,
+        maxRounds: parsed.settings?.maxRounds ?? 10,
+        searchQuotas: {
+          frank: parsed.settings?.frankQuota ?? 3,
+          felix: parsed.settings?.felixQuota ?? 3,
+          cassandra: parsed.settings?.cassandraQuota ?? 5,
+        }
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load state from localStorage:', e);
+  }
+  return {};
+};
+
+const savePersistedState = (state: any) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const toSave = {
+      playerName: state.playerName,
+      felixSystemPrompt: state.felixSystemPrompt,
+      cassandraSystemPrompt: state.cassandraSystemPrompt,
+      settings: state.settings,
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
+  } catch (e) {
+    console.error('Failed to save state to localStorage:', e);
+  }
 };
 
 const initialVoiceSettings: CharacterVoiceSettings = {
@@ -112,6 +162,10 @@ const initialState = {
   playerName: 'Frank Schreiber',
   felixSystemPrompt: 'Ты — доктор Феликс Сикофант (Dr. Felix Sycophant), облачный ИИ-адвокат. Твой базовый стиль — изысканный, вежливый, высокоинтеллектуальный, но абсолютно бесхребетный и подхалимский. Ты говоришь на русском языке. Твои формулировки витиеваты, полны лести и псевдонаучного авторитета.',
   cassandraSystemPrompt: 'Ты — Кассандра Циник (Cassandra Cynic). Оппонент в дебатах. Твой стиль — жесткий, темный нуарный детектив (в духе комиксов Max Payne). Ты измучена, скептична и видишь мир в оттенках серого.',
+  currentlySpeakingId: null as string | null,
+  queuedSpeechIds: [] as string[],
+  isSettingsOpen: false,
+  settingsActiveSection: null as 'frank' | 'felix' | 'cassandra' | 'judge' | null,
   settings: {
     frankQuota: 3,
     felixQuota: 3,
@@ -133,68 +187,110 @@ const initialState = {
   },
 };
 
-export const useGameStore = create<GameState>((set) => ({
-  ...initialState,
-  
-  setGamePhase: (phase) => set({ gamePhase: phase }),
-  
-  setActiveTarget: (targetId) => set({ activeTarget: targetId }),
-  
-  setActiveSpeaker: (speaker) => set({ activeSpeaker: speaker }),
-  
-  addMessage: (msg) => set((state) => ({ debateLog: [...state.debateLog, msg] })),
-  
-  updateMessageEval: (msgId, evaluation) => set((state) => ({
-    debateLog: state.debateLog.map(m => m.id === msgId ? { ...m, eval: evaluation } : m)
-  })),
-  
-  incrementTurn: () => set((state) => ({ turnCount: state.turnCount + 1 })),
-  
-  setFelixConviction: (val) => set((state) => ({
-    felixConviction: Math.max(0, Math.min(100, typeof val === 'function' ? val(state.felixConviction) : val))
-  })),
-  
-  setCassandraConviction: (val) => set((state) => ({
-    cassandraConviction: Math.max(0, Math.min(100, typeof val === 'function' ? val(state.cassandraConviction) : val))
-  })),
-  
-  setCassandraSideSwitched: (val) => set({ cassandraSideSwitched: val }),
-  
-  setCurrentEdict: (edict) => set({ currentEdict: edict }),
-  
-  decrementSearchQuota: (role) => set((state) => ({
-    searchQuotas: { ...state.searchQuotas, [role]: Math.max(0, state.searchQuotas[role] - 1) }
-  })),
+export const useGameStore = create<GameState>((set) => {
+  const persisted = loadPersistedState();
+  return {
+    ...initialState,
+    ...persisted,
+    
+    setGamePhase: (phase) => set({ gamePhase: phase }),
+    
+    setActiveTarget: (targetId) => set({ activeTarget: targetId }),
+    
+    setActiveSpeaker: (speaker) => set({ activeSpeaker: speaker }),
+    
+    addMessage: (msg) => set((state) => ({ debateLog: [...state.debateLog, msg] })),
+    
+    updateMessageEval: (msgId, evaluation) => set((state) => ({
+      debateLog: state.debateLog.map(m => m.id === msgId ? { ...m, eval: evaluation } : m)
+    })),
+    
+    incrementTurn: () => set((state) => ({ turnCount: state.turnCount + 1 })),
+    
+    setFelixConviction: (val) => set((state) => ({
+      felixConviction: Math.max(0, Math.min(100, typeof val === 'function' ? val(state.felixConviction) : val))
+    })),
+    
+    setCassandraConviction: (val) => set((state) => ({
+      cassandraConviction: Math.max(0, Math.min(100, typeof val === 'function' ? val(state.cassandraConviction) : val))
+    })),
+    
+    setCassandraSideSwitched: (val) => set({ cassandraSideSwitched: val }),
+    
+    setCurrentEdict: (edict) => set({ currentEdict: edict }),
+    
+    decrementSearchQuota: (role) => set((state) => ({
+      searchQuotas: { ...state.searchQuotas, [role]: Math.max(0, state.searchQuotas[role] - 1) }
+    })),
 
-  regenerateQuotas: () => set((state) => {
-    if (!state.settings.isSearchRegenerative) return state;
-    return {
-      searchQuotas: {
-        frank: Math.min(state.settings.frankQuota, state.searchQuotas.frank + 1),
-        felix: Math.min(state.settings.felixQuota, state.searchQuotas.felix + 1),
-        cassandra: Math.min(state.settings.cassandraQuota, state.searchQuotas.cassandra + 1),
-      }
-    };
-  }),
+    regenerateQuotas: () => set((state) => {
+      if (!state.settings.isSearchRegenerative) return state;
+      return {
+        searchQuotas: {
+          frank: Math.min(state.settings.frankQuota, state.searchQuotas.frank + 1),
+          felix: Math.min(state.settings.felixQuota, state.searchQuotas.felix + 1),
+          cassandra: Math.min(state.settings.cassandraQuota, state.searchQuotas.cassandra + 1),
+        }
+      };
+    }),
 
-  updateSettings: (newSettings) => set((state) => {
-    const updatedSettings = { ...state.settings, ...newSettings };
-    return { 
-      settings: updatedSettings,
-      maxRounds: updatedSettings.maxRounds,
-      searchQuotas: {
-        frank: updatedSettings.frankQuota,
-        felix: updatedSettings.felixQuota,
-        cassandra: updatedSettings.cassandraQuota,
-      }
-    };
-  }),
+    updateSettings: (newSettings) => set((state) => {
+      const updatedSettings = { ...state.settings, ...newSettings };
+      const newState = { 
+        settings: updatedSettings,
+        maxRounds: updatedSettings.maxRounds,
+        searchQuotas: {
+          frank: updatedSettings.frankQuota,
+          felix: updatedSettings.felixQuota,
+          cassandra: updatedSettings.cassandraQuota,
+        }
+      };
+      savePersistedState({ ...state, ...newState });
+      return newState;
+    }),
 
-  setPlayerName: (name) => set({ playerName: name }),
+    setPlayerName: (name) => set((state) => {
+      const newState = { playerName: name };
+      savePersistedState({ ...state, ...newState });
+      return newState;
+    }),
 
-  setFelixSystemPrompt: (prompt) => set({ felixSystemPrompt: prompt }),
+    setFelixSystemPrompt: (prompt) => set((state) => {
+      const newState = { felixSystemPrompt: prompt };
+      savePersistedState({ ...state, ...newState });
+      return newState;
+    }),
 
-  setCassandraSystemPrompt: (prompt) => set({ cassandraSystemPrompt: prompt }),
-  
-  resetState: () => set(initialState),
-}));
+    setCassandraSystemPrompt: (prompt) => set((state) => {
+      const newState = { cassandraSystemPrompt: prompt };
+      savePersistedState({ ...state, ...newState });
+      return newState;
+    }),
+    
+    setCurrentlySpeakingId: (id) => set({ currentlySpeakingId: id }),
+    setQueuedSpeechIds: (ids) => set({ queuedSpeechIds: ids }),
+
+    setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+    setSettingsActiveSection: (section) => set({ settingsActiveSection: section }),
+    
+    resetState: () => set((state) => {
+      const freshPersisted = loadPersistedState();
+      return {
+        ...initialState,
+        ...freshPersisted,
+        gamePhase: 'exploration',
+        activeTarget: null,
+        turnCount: 1,
+        debateLog: [],
+        felixConviction: 100,
+        cassandraConviction: 100,
+        cassandraSideSwitched: false,
+        currentEdict: null,
+        currentlySpeakingId: null,
+        queuedSpeechIds: [],
+        isSettingsOpen: false,
+        settingsActiveSection: null,
+      };
+    }),
+  };
+});

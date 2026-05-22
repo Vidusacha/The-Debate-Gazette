@@ -22,3 +22,19 @@
     @apply font-serif;
   }
 }
+
+@keyframes glowFlash {
+  0%, 100% {
+    box-shadow: none;
+    border-color: rgba(212, 175, 55, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+    border-color: #D4AF37;
+  }
+}
+
+.animate-glow-flash {
+  animation: glowFlash 1s ease-in-out 2;
+}
+

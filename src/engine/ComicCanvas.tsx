@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/useGameStore';
 import { useDebateOrchestrator } from '../hooks/useDebateOrchestrator';
-import { AlertTriangle, Wifi, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { AlertTriangle, Wifi, Mic, MicOff, Volume2, VolumeX, Settings } from 'lucide-react';
 import fallaciesList from '../config/fallacies.json';
-import { speakText, stopSpeech } from '../services/speechService';
+import { speakText, stopSpeech, skipMessageSpeech } from '../services/speechService';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 export const ComicCanvas: React.FC = () => {
@@ -62,7 +62,8 @@ export const ComicCanvas: React.FC = () => {
           speakText(
             latestMsg.content,
             roleKey,
-            settings.voiceTtsSettings?.[roleKey]
+            settings.voiceTtsSettings?.[roleKey],
+            latestMsg.id
           );
         }
       }
@@ -70,13 +71,13 @@ export const ComicCanvas: React.FC = () => {
     prevLogLengthRef.current = debateLog.length;
   }, [debateLog, settings.voiceTtsEnabled, settings.voiceTtsSettings, gamePhase]);
 
-  // Stop voicing when resetting or if log is cleared
+  // Stop voicing when resetting, if log is cleared, or if TTS is disabled
   useEffect(() => {
-    if (debateLog.length === 0) {
+    if (debateLog.length === 0 || !settings.voiceTtsEnabled) {
       prevLogLengthRef.current = 0;
       stopSpeech();
     }
-  }, [debateLog]);
+  }, [debateLog, settings.voiceTtsEnabled]);
 
   // Clean up voice synthesis on phase change or unmount
   useEffect(() => {
@@ -94,6 +95,9 @@ export const ComicCanvas: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!playerInput.trim() || isTyping) return;
+    
+    // Stop any ongoing speech from the previous round
+    stopSpeech();
     
     setIsTyping(true);
     await processTurn(playerInput, useSearchCharge);
@@ -159,55 +163,274 @@ export const ComicCanvas: React.FC = () => {
             </div>
 
             {/* Injections & Settings Summary Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               
               {/* Card 1: Frank */}
-              <div className="border border-text-muted/30 p-4 bg-base/50 relative">
-                <div className="absolute top-2 right-2 text-text-muted/40 font-bold">#01</div>
-                <h3 className="font-serif text-lg text-text-primary uppercase border-b border-text-muted/20 pb-1 mb-3">
-                  {playerName}
-                </h3>
-                <p className="text-xs text-text-muted uppercase font-mono space-y-1">
-                  <div>Роль: Игрок (Свободный ввод)</div>
-                  <div className="text-accent-secondary">Поисковые заряды: {settings.frankQuota}</div>
-                </p>
+              <div className="border border-text-muted/30 p-4 bg-[#110f0e]/60 relative flex flex-col justify-between hover:border-accent-secondary/50 transition-all group">
+                <div>
+                  {/* Top Bar with Number & Settings */}
+                  <div className="flex justify-between items-center mb-3 select-none">
+                    <span className="text-[10px] text-accent-secondary font-mono tracking-widest font-bold">#01</span>
+                    <button 
+                      onClick={() => {
+                        store.setSettingsActiveSection('frank');
+                        store.setSettingsOpen(true);
+                      }}
+                      className="p-1.5 text-text-muted hover:text-accent-secondary hover:scale-110 transition-all cursor-pointer"
+                      title="Настройки репортера"
+                    >
+                      <Settings size={20} className="hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  </div>
+
+                  {/* Circular Avatar Container */}
+                  <div className="flex justify-center mb-4 select-none">
+                    <div className="w-16 h-16 rounded-full border border-text-muted/20 bg-[#2A2621]/30 overflow-hidden flex items-center justify-center p-1 group-hover:border-accent-secondary/40 group-hover:scale-105 transition-all duration-300">
+                      <svg viewBox="0 0 100 100" className="h-full w-auto">
+                        <defs>
+                          <linearGradient id="frankGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FFF" />
+                            <stop offset="60%" stopColor="#A89A84" />
+                            <stop offset="100%" stopColor="#5C554A" />
+                          </linearGradient>
+                          <linearGradient id="goldGradCard" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#FFE8A3" />
+                            <stop offset="100%" stopColor="#D4AF37" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="#2A2621" stroke="#3A342D" strokeWidth="1.5" />
+                        <path d="M25 80 C 25 60, 32 50, 40 48 C 35 48, 30 52, 28 60 C 26 70, 25 80, 25 80 Z" fill="#1C1A17" opacity="0.4" />
+                        <path d="M15 90 C 15 72, 28 60, 42 58 L 45 68 L 50 64 L 55 68 L 58 56 C 72 58, 85 70, 85 90 Z" fill="url(#frankGradCard)" />
+                        <path d="M42 56 L 48 72 L 50 64 Z" fill="#1C1A17" />
+                        <path d="M58 56 L 52 72 L 50 64 Z" fill="#1C1A17" />
+                        <path d="M48 64 L 52 64 L 54 85 L 50 89 L 46 85 Z" fill="url(#goldGradCard)" opacity={0.8} />
+                        <path d="M34 32 C 34 32, 33 52, 50 54 C 67 54, 66 32, 66 32 Z" fill="#D2C8BC" />
+                        <path d="M34 32 C 34 32, 40 48, 50 48 C 60 48, 66 32, 66 32 Z" fill="#A89A84" opacity="0.6" />
+                        <path d="M32 30 C 38 35, 62 35, 68 30 C 65 36, 35 36, 32 30 Z" fill="#1C1A17" opacity="0.8" />
+                        <path d="M20 28 C 30 26, 70 26, 80 28 C 85 29, 85 32, 80 32 C 70 32, 30 32, 20 32 C 15 32, 15 29, 20 28 Z" fill="#1C1A17" />
+                        <path d="M28 28 C 28 15, 38 12, 50 15 C 62 12, 72 15, 72 28 Z" fill="url(#frankGradCard)" />
+                        <path d="M28 25 C 38 23, 62 23, 72 25 L 72 28 C 62 26, 38 26, 28 28 Z" fill="url(#goldGradCard)" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h3 className="font-serif text-lg text-text-primary uppercase border-b border-text-muted/20 pb-1 mb-3 text-center">
+                    {playerName}
+                  </h3>
+                  <div className="text-xs text-text-muted uppercase font-mono space-y-1 text-center md:text-left">
+                    <div>Роль: Игрок / Главред</div>
+                    <div className="text-accent-secondary">Поисковые заряды: {settings.frankQuota}</div>
+                    <div>Ввод: Свободная Риторика</div>
+                  </div>
+                </div>
               </div>
 
               {/* Card 2: Felix */}
-              <div className="border border-accent-secondary/30 p-4 bg-base/50 relative">
-                <div className="absolute top-2 right-2 text-accent-secondary/30 font-bold">#02</div>
-                <h3 className="font-serif text-lg text-accent-secondary uppercase border-b border-accent-secondary/20 pb-1 mb-3">
-                  Dr. Felix
-                </h3>
-                <div className="text-xs text-text-muted uppercase font-mono space-y-1">
-                  <div>Роль: Облачный Защитник</div>
-                  <div>Поисковые заряды: {settings.felixQuota}</div>
-                  <div>Deep Research: {settings.deepResearch.felix ? 'АКТИВЕН' : 'ВЫКЛ'}</div>
-                  <div className="text-xs text-accent-secondary border-t border-text-muted/10 pt-1 mt-1">
-                    Специи: {Object.entries(settings.injections.felix)
-                      .filter(([_, v]) => v)
-                      .map(([k]) => k === 'adHominem' ? 'AdHom' : k === 'profanity' ? 'Мат' : 'Сарказм')
-                      .join(', ') || 'Нет'}
+              <div className="border border-accent-secondary/30 p-4 bg-[#110f0e]/60 relative flex flex-col justify-between hover:border-accent-secondary/50 transition-all group">
+                <div>
+                  {/* Top Bar with Number & Settings */}
+                  <div className="flex justify-between items-center mb-3 select-none">
+                    <span className="text-[10px] text-accent-secondary font-mono tracking-widest font-bold">#02</span>
+                    <button 
+                      onClick={() => {
+                        store.setSettingsActiveSection('felix');
+                        store.setSettingsOpen(true);
+                      }}
+                      className="p-1.5 text-text-muted hover:text-accent-secondary hover:scale-110 transition-all cursor-pointer"
+                      title="Настройки защитника"
+                    >
+                      <Settings size={20} className="hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  </div>
+
+                  {/* Circular Avatar Container */}
+                  <div className="flex justify-center mb-4 select-none">
+                    <div className="w-16 h-16 rounded-full border border-accent-secondary/20 bg-[#2A2621]/30 overflow-hidden flex items-center justify-center p-1 group-hover:border-accent-secondary/40 group-hover:scale-105 transition-all duration-300">
+                      <svg viewBox="0 0 100 100" className="h-full w-auto">
+                        <defs>
+                          <linearGradient id="felixGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FFEFA6" />
+                            <stop offset="50%" stopColor="#D4AF37" />
+                            <stop offset="100%" stopColor="#8A6B0E" />
+                          </linearGradient>
+                          <linearGradient id="screenGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2E281F" />
+                            <stop offset="100%" stopColor="#1C1A17" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="#2A2621" stroke="#D4AF37" strokeWidth="1" strokeDasharray="3 2" />
+                        <ellipse cx="50" cy="80" rx="30" ry="8" fill="none" stroke="#D4AF37" strokeWidth="1" opacity="0.3" />
+                        <ellipse cx="50" cy="84" rx="22" ry="6" fill="none" stroke="#D4AF37" strokeWidth="1.5" opacity="0.5" />
+                        <path d="M40 76 L 60 76 L 56 86 L 44 86 Z" fill="url(#felixGradCard)" />
+                        <path d="M45 68 L 55 68 L 53 77 L 47 77 Z" fill="#1C1A17" />
+                        <rect x="24" y="22" width="52" height="46" rx="10" fill="url(#felixGradCard)" stroke="#1C1A17" strokeWidth="2" />
+                        <line x1="50" y1="22" x2="50" y2="12" stroke="#D4AF37" strokeWidth="2.5" />
+                        <circle cx="50" cy="10" r="4" fill="#D4AF37" />
+                        <path d="M42 6 C 45 4, 55 4, 58 6" fill="none" stroke="#D4AF37" strokeWidth="1" opacity="0.7" />
+                        <path d="M38 2 C 43 -2, 57 -2, 62 2" fill="none" stroke="#D4AF37" strokeWidth="0.8" opacity="0.4" />
+                        <rect x="29" y="27" width="42" height="34" rx="6" fill="url(#screenGradCard)" stroke="#D4AF37" strokeWidth="1.5" />
+                        <circle cx="41" cy="38" r="3.5" fill="#FFEFA6" />
+                        <circle cx="59" cy="38" r="3.5" fill="#FFEFA6" />
+                        <path d="M36 33 Q 41 31, 46 34" fill="none" stroke="#FFEFA6" strokeWidth="1.5" />
+                        <path d="M64 33 Q 59 31, 54 34" fill="none" stroke="#FFEFA6" strokeWidth="1.5" />
+                        <path d="M38 48 Q 50 56, 62 48" fill="none" stroke="#FFEFA6" strokeWidth="3" strokeLinecap="round" />
+                        <circle cx="38" cy="48" r="1.5" fill="#FFEFA6" />
+                        <circle cx="62" cy="48" r="1.5" fill="#FFEFA6" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h3 className="font-serif text-lg text-accent-secondary uppercase border-b border-accent-secondary/20 pb-1 mb-3 text-center">
+                    Dr. Felix
+                  </h3>
+                  <div className="text-xs text-text-muted uppercase font-mono space-y-1 text-center md:text-left">
+                    <div>Роль: Облачный Защитник</div>
+                    <div>Поисковые заряды: {settings.felixQuota}</div>
+                    <div>Deep Research: {settings.deepResearch.felix ? 'АКТИВЕН' : 'ВЫКЛ'}</div>
+                    <div className="text-xs text-accent-secondary border-t border-text-muted/10 pt-1 mt-1">
+                      Специи: {Object.entries(settings.injections.felix)
+                        .filter(([_, v]) => v)
+                        .map(([k]) => k === 'adHominem' ? 'AdHom' : k === 'profanity' ? 'Мат' : 'Сарказм')
+                        .join(', ') || 'Нет'}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Card 3: Cassandra */}
-              <div className="border border-accent-primary/30 p-4 bg-base/50 relative">
-                <div className="absolute top-2 right-2 text-accent-primary/30 font-bold">#03</div>
-                <h3 className="font-serif text-lg text-accent-primary uppercase border-b border-accent-primary/20 pb-1 mb-3">
-                  Cassandra
-                </h3>
-                <div className="text-xs text-text-muted uppercase font-mono space-y-1">
-                  <div>Роль: Локальный Оппонент</div>
-                  <div>Модель: Mistral (LM Studio)</div>
-                  <div>Поисковые заряды: {settings.cassandraQuota}</div>
-                  <div>Deep Research: {settings.deepResearch.cassandra ? 'АКТИВЕН' : 'ВЫКЛ'}</div>
-                  <div className="text-xs text-accent-primary border-t border-text-muted/10 pt-1 mt-1">
-                    Специи: {Object.entries(settings.injections.cassandra)
-                      .filter(([_, v]) => v)
-                      .map(([k]) => k === 'adHominem' ? 'AdHom' : k === 'profanity' ? 'Мат' : 'Сарказм')
-                      .join(', ') || 'Нет'}
+              <div className="border border-accent-primary/30 p-4 bg-[#110f0e]/60 relative flex flex-col justify-between hover:border-accent-primary/50 transition-all group">
+                <div>
+                  {/* Top Bar with Number & Settings */}
+                  <div className="flex justify-between items-center mb-3 select-none">
+                    <span className="text-[10px] text-accent-primary font-mono tracking-widest font-bold">#03</span>
+                    <button 
+                      onClick={() => {
+                        store.setSettingsActiveSection('cassandra');
+                        store.setSettingsOpen(true);
+                      }}
+                      className="p-1.5 text-text-muted hover:text-accent-primary hover:scale-110 transition-all cursor-pointer"
+                      title="Настройки оппонента"
+                    >
+                      <Settings size={20} className="hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  </div>
+
+                  {/* Circular Avatar Container */}
+                  <div className="flex justify-center mb-4 select-none">
+                    <div className="w-16 h-16 rounded-full border border-accent-primary/20 bg-[#2A2621]/30 overflow-hidden flex items-center justify-center p-1 group-hover:border-accent-primary/40 group-hover:scale-105 transition-all duration-300">
+                      <svg viewBox="0 0 100 100" className="h-full w-auto">
+                        <defs>
+                          <linearGradient id="cassGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FFE3E3" />
+                            <stop offset="40%" stopColor="#E03131" />
+                            <stop offset="100%" stopColor="#5C1616" />
+                          </linearGradient>
+                          <linearGradient id="hairGradCard" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#301A1A" />
+                            <stop offset="100%" stopColor="#120A0A" />
+                          </linearGradient>
+                          <linearGradient id="glassGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#E03131" />
+                            <stop offset="100%" stopColor="#1C1A17" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="#1C1515" stroke="#E03131" strokeWidth="1" />
+                        <path d="M22 45 C 22 25, 30 14, 50 14 C 70 14, 78 25, 78 45 L 75 70 C 75 70, 68 78, 50 78 C 32 78, 25 70, 25 70 Z" fill="url(#hairGradCard)" />
+                        <path d="M15 90 C 15 72, 28 60, 40 58 L 43 72 L 50 67 L 57 72 L 60 58 C 72 60, 85 72, 85 90 Z" fill="url(#cassGradCard)" />
+                        <path d="M28 58 L 42 74 L 40 58 Z" fill="#3D1111" />
+                        <path d="M72 58 L 58 74 L 60 58 Z" fill="#3D1111" />
+                        <path d="M34 32 C 34 32, 33 52, 50 54 C 67 54, 66 32, 66 32 Z" fill="#E8D1D1" />
+                        <path d="M34 32 C 34 32, 40 48, 50 48 C 60 48, 66 32, 66 32 Z" fill="#C99E9E" opacity="0.6" />
+                        <path d="M32 32 C 38 31, 48 31, 49 33 C 49 37, 44 41, 38 41 C 33 41, 32 37, 32 32 Z" fill="url(#glassGradCard)" stroke="#FFE3E3" strokeWidth="0.8" />
+                        <path d="M68 32 C 62 31, 52 31, 51 33 C 51 37, 56 41, 62 41 C 67 41, 68 37, 68 32 Z" fill="url(#glassGradCard)" stroke="#FFE3E3" strokeWidth="0.8" />
+                        <line x1="49" y1="33" x2="51" y2="33" stroke="#FFE3E3" strokeWidth="1.5" />
+                        <path d="M35 34 L 43 34 L 38 39 Z" fill="#FFFFFF" opacity="0.4" />
+                        <path d="M53 34 L 61 34 L 56 39 Z" fill="#FFFFFF" opacity="0.4" />
+                        <path d="M44 48 Q 50 51, 56 48" fill="none" stroke="#5C1616" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M32 16 C 45 10, 68 18, 70 30 C 65 24, 45 22, 36 28 Z" fill="url(#hairGradCard)" />
+                        <path d="M26 30 C 26 30, 24 50, 31 52 C 28 42, 28 34, 30 30 Z" fill="url(#hairGradCard)" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h3 className="font-serif text-lg text-accent-primary uppercase border-b border-accent-primary/20 pb-1 mb-3 text-center">
+                    Cassandra
+                  </h3>
+                  <div className="text-xs text-text-muted uppercase font-mono space-y-1 text-center md:text-left">
+                    <div>Роль: Локальный Оппонент</div>
+                    <div>Поисковые заряды: {settings.cassandraQuota}</div>
+                    <div>Deep Research: {settings.deepResearch.cassandra ? 'АКТИВЕН' : 'ВЫКЛ'}</div>
+                    <div className="text-xs text-accent-primary border-t border-text-muted/10 pt-1 mt-1">
+                      Специи: {Object.entries(settings.injections.cassandra)
+                        .filter(([_, v]) => v)
+                        .map(([k]) => k === 'adHominem' ? 'AdHom' : k === 'profanity' ? 'Мат' : 'Сарказм')
+                        .join(', ') || 'Нет'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: Solomon Balance */}
+              <div className="border border-text-primary/30 p-4 bg-[#110f0e]/60 relative flex flex-col justify-between hover:border-text-primary/50 transition-all group">
+                <div>
+                  {/* Top Bar with Number & Settings */}
+                  <div className="flex justify-between items-center mb-3 select-none">
+                    <span className="text-[10px] text-text-primary font-mono tracking-widest font-bold">#04</span>
+                    <button 
+                      onClick={() => {
+                        store.setSettingsActiveSection('judge');
+                        store.setSettingsOpen(true);
+                      }}
+                      className="p-1.5 text-text-muted hover:text-text-primary hover:scale-110 transition-all cursor-pointer"
+                      title="Настройки верховного судьи"
+                    >
+                      <Settings size={20} className="hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  </div>
+
+                  {/* Circular Avatar Container */}
+                  <div className="flex justify-center mb-4 select-none">
+                    <div className="w-16 h-16 rounded-full border border-text-primary/20 bg-[#2A2621]/30 overflow-hidden flex items-center justify-center p-1 group-hover:border-text-primary/40 group-hover:scale-105 transition-all duration-300">
+                      <svg viewBox="0 0 100 100" className="h-full w-auto">
+                        <defs>
+                          <linearGradient id="metalGradCard" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#FFFFFF" />
+                            <stop offset="50%" stopColor="#9C9993" />
+                            <stop offset="100%" stopColor="#383633" />
+                          </linearGradient>
+                          <linearGradient id="eyeGradCard" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#FF4D4D" />
+                            <stop offset="100%" stopColor="#990000" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="#1C1A17" stroke="#9C9993" strokeWidth="1.5" />
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="#2D2A26" strokeWidth="1" />
+                        <circle cx="50" cy="50" r="22" fill="none" stroke="#2D2A26" strokeWidth="1" />
+                        <rect x="47" y="18" width="6" height="52" fill="url(#metalGradCard)" stroke="#1C1A17" strokeWidth="1" />
+                        <path d="M40 70 L 60 70 L 64 82 L 36 82 Z" fill="url(#metalGradCard)" stroke="#1C1A17" strokeWidth="1.5" />
+                        <path d="M15 26 L 85 26 L 85 30 L 15 30 Z" fill="url(#metalGradCard)" stroke="#1C1A17" strokeWidth="1" />
+                        <line x1="18" y1="28" x2="10" y2="48" stroke="#9C9993" strokeWidth="1" />
+                        <line x1="18" y1="28" x2="26" y2="48" stroke="#9C9993" strokeWidth="1" />
+                        <path d="M8 48 L 28 48 L 26 50 L 10 50 Z" fill="#D4AF37" />
+                        <line x1="82" y1="28" x2="74" y2="48" stroke="#9C9993" strokeWidth="1" />
+                        <line x1="82" y1="28" x2="90" y2="48" stroke="#9C9993" strokeWidth="1" />
+                        <path d="M72 48 L 92 48 L 90 50 L 74 50 Z" fill="#D4AF37" />
+                        <polygon points="50,33 65,45 50,57 35,45" fill="#1C1A17" stroke="url(#metalGradCard)" strokeWidth="1.5" />
+                        <circle cx="50" cy="45" r="7" fill="url(#eyeGradCard)" stroke="#FF4D4D" strokeWidth="1.5" />
+                        <circle cx="50" cy="45" r="2" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h3 className="font-serif text-lg text-text-primary uppercase border-b border-text-muted/20 pb-1 mb-3 text-center">
+                    Solomon Balance
+                  </h3>
+                  <div className="text-xs text-text-muted uppercase font-mono space-y-1 text-center md:text-left">
+                    <div>Роль: Верховный Редактор / Судья</div>
+                    <div>Эдикты Реальности: Каждые 3 хода</div>
+                    <div className="text-xs text-text-primary border-t border-text-muted/10 pt-1 mt-1">
+                      Анализ: Логика, Рациональность, Уважение к Тексту
+                    </div>
                   </div>
                 </div>
               </div>
@@ -304,9 +527,28 @@ export const ComicCanvas: React.FC = () => {
                     >
                       {/* Column Header */}
                       <div className="flex justify-between items-center mb-2 select-none">
-                        <span className="font-mono text-sm font-extrabold tracking-widest text-[#1C1A17]">
-                          {nameMap[msg.role as 'frank' | 'felix' | 'cassandra'] || msg.role.toUpperCase()}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-sm font-extrabold tracking-widest text-[#1C1A17]">
+                            {nameMap[msg.role as 'frank' | 'felix' | 'cassandra'] || msg.role.toUpperCase()}
+                          </span>
+                          
+                          {/* Speech skip/stop button */}
+                          {(store.currentlySpeakingId === msg.id || store.queuedSpeechIds.includes(msg.id)) && (
+                            <button
+                              onClick={() => skipMessageSpeech(msg.id)}
+                              className={`flex items-center gap-1 px-1.5 py-0.5 border text-[10px] font-mono font-bold uppercase transition-all duration-300 cursor-pointer ${
+                                store.currentlySpeakingId === msg.id
+                                  ? 'bg-red-800 text-white border-red-800 animate-pulse hover:bg-red-950 hover:border-red-950 shadow-[0_0_8px_rgba(153,27,27,0.4)]'
+                                  : 'bg-transparent text-red-900 border-red-900/40 hover:bg-red-800/10'
+                              }`}
+                              title={store.currentlySpeakingId === msg.id ? "Остановить озвучку реплики (говорит)" : "Убрать из очереди озвучки (в очереди)"}
+                            >
+                              <VolumeX size={10} />
+                              <span>{store.currentlySpeakingId === msg.id ? 'ПРОПУСТИТЬ' : 'В ОЧЕРЕДИ'}</span>
+                            </button>
+                          )}
+                        </div>
+                        
                         {msg.isSearchActive && (
                           <span className="flex items-center gap-1 font-mono text-xs bg-[#1C1A17] text-[#ECE7E1] px-1.5 py-0.5 uppercase">
                             <Wifi size={12} /> СЕТЬ

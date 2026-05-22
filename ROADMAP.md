@@ -22,6 +22,7 @@
 [x] Reality Warps (Edicts): Rules of logic/morality that change every 3 turns.
 [x] Search Quota: 3-5 limited search charges per session for each participant.
 [x] Voice Integration: Implement Text-to-Speech (TTS) for character dialogue and Speech-to-Text (STT) for player input, with customizable voice profiles.
+[x] Enhanced Settings UX: Deep-linking navigation and character summary dashboard with interactive SVG avatars.
 
 🔜 Phase 5: Hardware & Sensory Overload
 [ ] Hardware Status Bar: Real-time GPU/CPU/NIC monitoring in the UI footer.
