@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/useGameStore';
 import { useDebateOrchestrator } from '../hooks/useDebateOrchestrator';
-import { AlertTriangle, Wifi } from 'lucide-react';
+import { AlertTriangle, Wifi, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import fallaciesList from '../config/fallacies.json';
+import { speakText, stopSpeech } from '../services/speechService';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 export const ComicCanvas: React.FC = () => {
   const store = useGameStore();
@@ -32,6 +34,56 @@ export const ComicCanvas: React.FC = () => {
   
   const articleEndRef = useRef<HTMLDivElement>(null);
   const { processTurn } = useDebateOrchestrator(setStatusMessage, userHandle);
+
+  // Speech Recognition (STT) Hook
+  const {
+    isListening,
+    toggleListening,
+    isSupported: isSttSupported,
+  } = useSpeechRecognition({
+    onResult: (transcript) => {
+      setPlayerInput((prev) => {
+        const space = prev && !prev.endsWith(' ') ? ' ' : '';
+        return prev + space + transcript;
+      });
+    },
+    lang: 'ru-RU',
+  });
+
+  // Voicing character lines when added to the debate log (TTS)
+  const prevLogLengthRef = useRef(0);
+  useEffect(() => {
+    if (gamePhase === 'debate' && settings.voiceTtsEnabled) {
+      if (debateLog.length > prevLogLengthRef.current) {
+        const latestMsg = debateLog[debateLog.length - 1];
+        // Do not voice the player themselves ('frank')
+        if (latestMsg.role !== 'frank') {
+          const roleKey = latestMsg.role as Exclude<typeof latestMsg.role, 'frank'>;
+          speakText(
+            latestMsg.content,
+            roleKey,
+            settings.voiceTtsSettings?.[roleKey]
+          );
+        }
+      }
+    }
+    prevLogLengthRef.current = debateLog.length;
+  }, [debateLog, settings.voiceTtsEnabled, settings.voiceTtsSettings, gamePhase]);
+
+  // Stop voicing when resetting or if log is cleared
+  useEffect(() => {
+    if (debateLog.length === 0) {
+      prevLogLengthRef.current = 0;
+      stopSpeech();
+    }
+  }, [debateLog]);
+
+  // Clean up voice synthesis on phase change or unmount
+  useEffect(() => {
+    return () => {
+      stopSpeech();
+    };
+  }, [gamePhase]);
 
   // Auto-scroll to the bottom of the newspaper article
   useEffect(() => {
@@ -186,12 +238,21 @@ export const ComicCanvas: React.FC = () => {
           <div className={`flex-grow border-4 border-text-primary rounded-sm shadow-xl p-4 flex flex-col overflow-hidden relative ${paperTextureClass}`}>
             
             {/* Newspaper Masthead */}
-            <div className="border-b-4 border-double border-[#1C1A17] pb-3 mb-4 shrink-0 flex justify-between items-center select-none">
+            <div className="border-b-4 border-double border-[#1C1A17] pb-3 mb-4 shrink-0 flex justify-between items-center select-none gap-2">
               <span className="font-serif text-sm font-bold uppercase tracking-wider">Выпуск №1 // Раунд {turnCount} из {maxRounds}</span>
               <h2 className="font-serif text-3xl font-extrabold uppercase tracking-widest text-[#1C1A17] text-center flex-grow hidden md:block">
                 THE DEBATE GAZETTE
               </h2>
-              <span className="font-mono text-sm uppercase tracking-wider border border-[#1C1A17] px-2 py-0.5">ВЕРСТКА ОНЛАЙН</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => store.updateSettings({ voiceTtsEnabled: !settings.voiceTtsEnabled })}
+                  className="p-1 border border-[#1C1A17] rounded text-[#1C1A17] hover:bg-[#1C1A17]/10 transition-colors cursor-pointer flex items-center justify-center"
+                  title={settings.voiceTtsEnabled ? "Отключить озвучку реплик" : "Включить озвучку реплик"}
+                >
+                  {settings.voiceTtsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                </button>
+                <span className="font-mono text-sm uppercase tracking-wider border border-[#1C1A17] px-2 py-0.5">ВЕРСТКА ОНЛАЙН</span>
+              </div>
             </div>
 
             {/* Active Edict Display */}
@@ -561,19 +622,36 @@ export const ComicCanvas: React.FC = () => {
                   [ Лимит поиска: {searchQuotas.frank} зарядов осталось ]
                 </span>
               </div>
-              <textarea 
-                value={playerInput}
-                onChange={(e) => setPlayerInput(e.target.value)}
-                disabled={isTyping || turnCount > maxRounds}
-                placeholder={turnCount > maxRounds ? "Игра завершена. Закройте сессию." : "Введите свой логический тезис или новость для обсуждения..."}
-                className="w-full bg-base/50 border border-text-muted text-text-primary p-3 focus:outline-none focus:border-accent-secondary resize-none font-mono text-base h-20 scrollbar-none"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit();
-                  }
-                }}
-              />
+              <div className="relative w-full">
+                <textarea 
+                  value={playerInput}
+                  onChange={(e) => setPlayerInput(e.target.value)}
+                  disabled={isTyping || turnCount > maxRounds}
+                  placeholder={turnCount > maxRounds ? "Игра завершена. Закройте сессию." : "Введите свой логический тезис или новость для обсуждения..."}
+                  className="w-full bg-base/50 border border-text-muted text-text-primary p-3 pr-12 focus:outline-none focus:border-accent-secondary resize-none font-mono text-base h-20 scrollbar-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                />
+                {settings.voiceSttEnabled && isSttSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    disabled={isTyping || turnCount > maxRounds}
+                    className={`absolute right-3 bottom-3 p-2 rounded-full cursor-pointer transition-all duration-300 ${
+                      isListening 
+                        ? 'bg-red-800 text-[#ECE7E1] shadow-[0_0_15px_rgba(153,27,27,0.7)] animate-pulse' 
+                        : 'bg-base/80 text-text-muted hover:text-accent-secondary border border-text-muted/30 hover:border-accent-secondary'
+                    }`}
+                    title={isListening ? 'Идет запись... Нажмите, чтобы остановить' : 'Голосовой ввод (нажмите для записи)'}
+                  >
+                    {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className="flex flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto justify-end">

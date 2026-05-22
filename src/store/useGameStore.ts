@@ -19,6 +19,12 @@ export interface DebateMessage {
   };
 }
 
+export interface CharacterVoiceSettings {
+  voiceName: string;
+  pitch: number;
+  rate: number;
+}
+
 export interface CharacterInjections {
   adHominem: boolean;
   profanity: boolean;
@@ -47,6 +53,13 @@ interface GameState {
     isSearchRegenerative: boolean;
     maxRounds: number;
     deepResearch: { felix: boolean; cassandra: boolean };
+    voiceTtsEnabled: boolean;
+    voiceSttEnabled: boolean;
+    voiceTtsSettings: {
+      felix: CharacterVoiceSettings;
+      cassandra: CharacterVoiceSettings;
+      judge: CharacterVoiceSettings;
+    };
     injections: {
       felix: CharacterInjections;
       cassandra: CharacterInjections;
@@ -78,6 +91,12 @@ const initialInjections: CharacterInjections = {
   sarcasm: true,
 };
 
+const initialVoiceSettings: CharacterVoiceSettings = {
+  voiceName: '',
+  pitch: 1.0,
+  rate: 1.0,
+};
+
 const initialState = {
   gamePhase: 'exploration' as GamePhase,
   activeTarget: null,
@@ -100,6 +119,13 @@ const initialState = {
     isSearchRegenerative: false,
     maxRounds: 10,
     deepResearch: { felix: false, cassandra: false },
+    voiceTtsEnabled: true,
+    voiceSttEnabled: true,
+    voiceTtsSettings: {
+      felix: { voiceName: '', pitch: 1.15, rate: 1.05 },
+      cassandra: { voiceName: '', pitch: 0.8, rate: 0.85 },
+      judge: { voiceName: '', pitch: 0.6, rate: 0.95 },
+    },
     injections: {
       felix: { ...initialInjections },
       cassandra: { ...initialInjections, adHominem: true },

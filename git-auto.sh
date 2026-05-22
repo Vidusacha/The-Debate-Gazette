@@ -86,10 +86,34 @@ git push --set-upstream origin "$CURRENT_BRANCH"
 PUSH_EXIT=$?
 
 if [ $PUSH_EXIT -eq 0 ]; then
-  echo -e "\n${GREEN}🎉 SUCCESS! Your changes have been successfully committed and pushed.${RESET}"
-  echo -e "${CYAN}==================================================${RESET}"
+  COMMIT_HASH=$(git rev-parse --short HEAD)
+  REMOTE_URL=$(git config --get remote.origin.url)
+  echo -e "\n${GREEN}==================================================${RESET}"
+  echo -e "${GREEN}🎉 SUCCESS! Git Auto-Pilot Pipeline Complete!${RESET}"
+  echo -e "${GREEN}==================================================${RESET}"
+  echo -e "${BOLD}📋 AI AUTO-PILOT SUMMARY REPORT:${RESET}"
+  echo -e "${CYAN}--------------------------------------------------${RESET}"
+  echo -e "📁 ${BOLD}Repository:${RESET}  $(pwd)"
+  echo -e "🌿 ${BOLD}Branch:${RESET}      ${CURRENT_BRANCH} (tracking origin/${CURRENT_BRANCH})"
+  echo -e "💬 ${BOLD}Commit:${RESET}      ${COMMIT_HASH}"
+  echo -e "📊 ${BOLD}Summary:${RESET}     ${SUMMARY}"
+  echo -e "⚡ ${BOLD}Remote:${RESET}      ${REMOTE_URL}"
+  echo -e "${CYAN}--------------------------------------------------${RESET}"
+  echo -e "${GREEN}✨ All operations completed successfully!${RESET}\n"
   exit 0
 else
-  echo -e "\n${RED}❌ Push failed. Please check your network or remote settings.${RESET}"
+  COMMIT_HASH=$(git rev-parse --short HEAD)
+  echo -e "\n${RED}==================================================${RESET}"
+  echo -e "${RED}⚠️  Git Push Interrupted or Failed${RESET}"
+  echo -e "${RED}==================================================${RESET}"
+  echo -e "${BOLD}📋 AI AUTO-PILOT LOCAL RUN REPORT (Push Pending):${RESET}"
+  echo -e "${CYAN}--------------------------------------------------${RESET}"
+  echo -e "📁 ${BOLD}Repository:${RESET}  $(pwd)"
+  echo -e "🌿 ${BOLD}Branch:${RESET}      ${CURRENT_BRANCH}"
+  echo -e "💬 ${BOLD}Commit:${RESET}      ${COMMIT_HASH} (Committed Locally)"
+  echo -e "📊 ${BOLD}Summary:${RESET}     ${SUMMARY}"
+  echo -e "${CYAN}--------------------------------------------------${RESET}"
+  echo -e "${GOLD}⚠️  Changes were committed locally, but could not be pushed to remote.${RESET}"
+  echo -e "Please check your network, remote settings, or run 'git push origin ${CURRENT_BRANCH}' manually.\n"
   exit 1
 fi

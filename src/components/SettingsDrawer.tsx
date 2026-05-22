@@ -5,6 +5,7 @@ import { useGameStore } from '../store/useGameStore';
 
 export const SettingsDrawer: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const { 
     settings, 
     updateSettings, 
@@ -16,6 +17,47 @@ export const SettingsDrawer: React.FC = () => {
     cassandraSystemPrompt,
     setCassandraSystemPrompt
   } = useGameStore();
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const loadVoices = () => {
+      // Chrome/Safari asynchronously populate getVoices(), let's fetch them
+      setAvailableVoices(window.speechSynthesis.getVoices());
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
+  const updateCharacterVoice = (
+    role: 'felix' | 'cassandra' | 'judge',
+    key: 'voiceName' | 'pitch' | 'rate',
+    value: string | number
+  ) => {
+    const currentSettings = settings.voiceTtsSettings || {
+      felix: { voiceName: '', pitch: 1.15, rate: 1.05 },
+      cassandra: { voiceName: '', pitch: 0.8, rate: 0.85 },
+      judge: { voiceName: '', pitch: 0.6, rate: 0.95 },
+    };
+    updateSettings({
+      voiceTtsSettings: {
+        ...currentSettings,
+        [role]: {
+          ...currentSettings[role],
+          [key]: value
+        }
+      }
+    });
+  };
+
+  const voiceSettings = settings.voiceTtsSettings || {
+    felix: { voiceName: '', pitch: 1.15, rate: 1.05 },
+    cassandra: { voiceName: '', pitch: 0.8, rate: 0.85 },
+    judge: { voiceName: '', pitch: 0.6, rate: 0.95 },
+  };
 
   const handleQuotaChange = (role: 'frankQuota' | 'felixQuota' | 'cassandraQuota', value: string) => {
     const num = parseInt(value, 10);
@@ -150,6 +192,145 @@ export const SettingsDrawer: React.FC = () => {
                       disabled={isLocked}
                       className="w-20 bg-base border border-text-muted/40 text-text-primary p-1.5 rounded text-center focus:outline-none focus:border-accent-secondary font-mono text-sm font-bold disabled:opacity-50"
                     />
+                  </div>
+                </section>
+
+                {/* 1.5. VOICE INTEGRATION */}
+                <section className="bg-base/40 p-4 border-2 border-text-muted/20 rounded-lg hover:border-accent-secondary/40 transition-colors duration-300">
+                  <h3 className="font-mono text-sm font-bold text-accent-secondary uppercase tracking-widest mb-3 border-b border-text-muted/10 pb-1.5">
+                    Голос и Озвучка
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <label className="flex items-center justify-between cursor-pointer group">
+                      <span className="text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-accent-secondary transition-colors">
+                        Озвучка персонажей (TTS)
+                      </span>
+                      <input 
+                        type="checkbox" 
+                        checked={settings.voiceTtsEnabled} 
+                        onChange={() => updateSettings({ voiceTtsEnabled: !settings.voiceTtsEnabled })} 
+                        className="accent-accent-secondary w-5 h-5 cursor-pointer"
+                      />
+                    </label>
+                    
+                    <label className="flex items-center justify-between cursor-pointer group">
+                      <span className="text-xs font-bold text-text-muted uppercase tracking-wider group-hover:text-accent-secondary transition-colors">
+                        Голосовой ввод игрока (STT)
+                      </span>
+                      <input 
+                        type="checkbox" 
+                        checked={settings.voiceSttEnabled} 
+                        onChange={() => updateSettings({ voiceSttEnabled: !settings.voiceSttEnabled })} 
+                        className="accent-accent-secondary w-5 h-5 cursor-pointer"
+                      />
+                    </label>
+
+                    {settings.voiceTtsEnabled && (
+                      <div className="mt-4 pt-4 border-t border-text-muted/10 space-y-4">
+                        <h4 className="text-xs font-bold text-text-primary uppercase tracking-widest mb-2">
+                          Настройка Тембров Героев:
+                        </h4>
+                        
+                        {(['felix', 'cassandra', 'judge'] as const).map((role) => {
+                          const charName = role === 'felix' 
+                            ? 'Доктор Феликс (Защитник)' 
+                            : role === 'cassandra' 
+                              ? 'Кассандра (Оппонент)' 
+                              : 'Судья Соломон (Редакция)';
+                          
+                          const charSubtitle = role === 'felix'
+                            ? 'Слащавый, высокий, быстрый темп'
+                            : role === 'cassandra'
+                              ? 'Нуарный, хриплый, низкий темп'
+                              : 'Величественный, басистый, размеренный';
+
+                          const accentColor = role === 'felix' 
+                            ? 'border-accent-secondary/30 text-accent-secondary' 
+                            : role === 'cassandra' 
+                              ? 'border-accent-primary/30 text-accent-primary' 
+                              : 'border-text-muted/30 text-text-primary';
+
+                          const sliderAccent = role === 'felix' 
+                            ? 'accent-accent-secondary' 
+                            : role === 'cassandra' 
+                              ? 'accent-accent-primary' 
+                              : 'accent-text-primary';
+
+                          const config = voiceSettings[role];
+
+                          return (
+                            <div key={role} className={`p-3 bg-[#110f0e] border-l-2 ${accentColor} rounded-r space-y-3`}>
+                              <div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-bold uppercase tracking-wider">{charName}</span>
+                                </div>
+                                <span className="text-[10px] text-text-muted/60 block">{charSubtitle}</span>
+                              </div>
+
+                              {/* Voice Selector */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-semibold text-text-muted uppercase tracking-wider block">
+                                  Системный Голос:
+                                </label>
+                                <select
+                                  value={config.voiceName}
+                                  onChange={(e) => updateCharacterVoice(role, 'voiceName', e.target.value)}
+                                  disabled={isLocked}
+                                  className="w-full bg-[#1c1a17] border border-text-muted/30 text-text-primary text-xs p-1.5 rounded focus:outline-none focus:border-accent-secondary transition-colors"
+                                >
+                                  <option value="">-- По умолчанию (Русский системный) --</option>
+                                  {availableVoices.map((voice) => (
+                                    <option key={voice.name} value={voice.name}>
+                                      {voice.name} ({voice.lang})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Pitch & Rate sliders */}
+                              <div className="grid grid-cols-2 gap-3">
+                                {/* Speed (rate) */}
+                                <div className="space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                                    <span>Скорость:</span>
+                                    <span className="font-bold">{config.rate.toFixed(2)}x</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0.5"
+                                    max="2.0"
+                                    step="0.05"
+                                    value={config.rate}
+                                    onChange={(e) => updateCharacterVoice(role, 'rate', parseFloat(e.target.value))}
+                                    disabled={isLocked}
+                                    className={`w-full ${sliderAccent} h-1 bg-text-muted/20 rounded-lg cursor-pointer disabled:opacity-50`}
+                                  />
+                                </div>
+
+                                {/* Height (pitch) */}
+                                <div className="space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                                    <span>Высота (Тон):</span>
+                                    <span className="font-bold">{config.pitch.toFixed(2)}x</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0.5"
+                                    max="2.0"
+                                    step="0.05"
+                                    value={config.pitch}
+                                    onChange={(e) => updateCharacterVoice(role, 'pitch', parseFloat(e.target.value))}
+                                    disabled={isLocked}
+                                    className={`w-full ${sliderAccent} h-1 bg-text-muted/20 rounded-lg cursor-pointer disabled:opacity-50`}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </section>
 

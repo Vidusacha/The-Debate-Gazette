@@ -16,11 +16,12 @@
 [x] Identity persistence (@ABOCb context).
 
 🚧 Phase 4: The Trialogue Engine (CURRENT)
-[ ] Multi-Agent Orchestrator: Sequential turn-taking (Player -> Judge -> Novak -> Vesper).
-[ ] Vesper Integration: Gemini-based Cloud NPC with "Corporate Elegance" persona.
-[ ] The Arbiter (Zero): Scoring logic based on the 8-way Vector Compass.
-[ ] Reality Warps (Edicts): Rules of logic/morality that change every 3 turns.
-[ ] Search Quota: 3-5 limited search charges per session for each participant.
+[x] Multi-Agent Orchestrator: Sequential turn-taking (Player -> Judge -> Novak -> Vesper).
+[x] Vesper Integration: Gemini-based Cloud NPC with "Corporate Elegance" persona.
+[x] The Arbiter (Zero): Scoring logic based on the 8-way Vector Compass.
+[x] Reality Warps (Edicts): Rules of logic/morality that change every 3 turns.
+[x] Search Quota: 3-5 limited search charges per session for each participant.
+[x] Voice Integration: Implement Text-to-Speech (TTS) for character dialogue and Speech-to-Text (STT) for player input, with customizable voice profiles.
 
 🔜 Phase 5: Hardware & Sensory Overload
 [ ] Hardware Status Bar: Real-time GPU/CPU/NIC monitoring in the UI footer.
